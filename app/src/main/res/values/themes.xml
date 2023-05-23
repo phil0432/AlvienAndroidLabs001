@@ -1,8 +1,14 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.AlviensAndroidLabs" parent="Theme.Material3.DayNight">
+    <style name="Base.Theme.AlviensAndroidLabs" parent="Theme.MaterialComponents.DayNight">
         <!-- Customize your light theme here. -->
         <item name="colorPrimary">@color/my_primary</item>
+
+
+
+
+
+
 
         <item name="colorSecondary">@color/my_secondary</item>
 
