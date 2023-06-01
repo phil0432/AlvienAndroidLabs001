@@ -3,4 +3,9 @@
     <string name="app_name">Alvien\'s Android Labs</string>
     <string name="hello_message">નમસ્કાર દુનિયા</string>
     <string name="button_message">હું એક બટન છું</string>
-    </resources>
+    <string name="spin_message">ધ્વજ ઘુમાવો</string>
+    <string name="button1">બટન 1</string>
+    <string name="button2">બટન 2</string>
+    <string name="button3">બટન 3</string>
+
+</resources>

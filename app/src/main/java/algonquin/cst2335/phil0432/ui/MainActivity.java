@@ -4,6 +4,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.os.Bundle;
+import android.view.animation.Animation;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -22,6 +25,8 @@ public class MainActivity extends AppCompatActivity {
     private MainViewModel model;
     private ActivityMainBinding variableBinding;
 
+    ImageView imgView;
+    Switch sw;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,56 +36,22 @@ public class MainActivity extends AppCompatActivity {
         variableBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(variableBinding.getRoot());
 
-        TextView mytext = variableBinding.textview;
-        EditText myedittext = variableBinding.myedittext;
-        Button mybutton = variableBinding.mybutton;
-        CheckBox mycheckbox = variableBinding.checkbox;
-        Switch myswitch = variableBinding.switch1;
-        RadioButton myradiobutton = variableBinding.radiobutton;
-        ImageView myimageview = variableBinding.imageview;
-        ImageButton myimagebutton = variableBinding.myimagebutton;
+        imgView = findViewById(R.id.imageView);
+        sw = findViewById(R.id.spin_switch);
 
-        model = new ViewModelProvider(this).get(MainViewModel.class);
+        sw.setOnCheckedChangeListener( (btn, isChecked) -> {
+            if (isChecked)
+            {
+                RotateAnimation rotate = new RotateAnimation(0, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                rotate.setDuration(5000);
+                rotate.setRepeatCount(Animation.INFINITE);
+                rotate.setInterpolator(new LinearInterpolator());
 
-        //variableBinding.myedittext.setText(model.editString);
-        variableBinding.mybutton.setOnClickListener(click ->
-                {
-                    model.editString.postValue(variableBinding.myedittext.getText().toString());
-                }
-        );
-
-        model.editString.observe(this, s -> {
-            variableBinding.textview.setText("Your edit text has: "+ s);
-        });
-        model.check_coffee.observe(this, selected -> {
-            variableBinding.checkbox.setChecked(selected);
-            variableBinding.radiobutton.setChecked(selected);
-            variableBinding.switch1.setChecked(selected);
-
-            String toast_message = "The value is now: " + selected;
-            Toast.makeText(MainActivity.this, toast_message, Toast.LENGTH_SHORT).show();
-        });
-
-        mycheckbox.setOnCheckedChangeListener( (btn, isChecked) -> {
-            model.check_coffee.postValue(isChecked);
-        } );
-        myswitch.setOnCheckedChangeListener( (btn, isChecked) -> {
-            model.check_coffee.postValue(isChecked);
-        } );
-        myradiobutton.setOnCheckedChangeListener( (btn, isChecked) -> {
-            model.check_coffee.postValue(isChecked);
-        } );
-
-        myimagebutton.setOnClickListener(v -> {
-            int height = v.getHeight();
-            int width = v.getWidth();
-
-            CharSequence text = "The width = " + width + " and height = " + height;
-            int duration = Toast.LENGTH_SHORT;
-
-            Toast toast = Toast.makeText(this, text, duration);
-            toast.show();
-
+                imgView.startAnimation(rotate);
+            }
+            else {
+                imgView.clearAnimation();
+            }
         });
 
     }
