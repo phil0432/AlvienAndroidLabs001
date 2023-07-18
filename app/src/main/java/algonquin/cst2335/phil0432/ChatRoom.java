@@ -1,11 +1,17 @@
 package algonquin.cst2335.phil0432;
 
+import static algonquin.cst2335.phil0432.ChatRoom.mDAO;
+import static algonquin.cst2335.phil0432.ChatRoom.messages;
+import static algonquin.cst2335.phil0432.ChatRoom.myAdapter;
+
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.room.Room;
 
 import android.os.Bundle;
 import android.view.View;
@@ -13,10 +19,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.material.snackbar.Snackbar;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import algonquin.cst2335.phil0432.databinding.ActivityChatRoomBinding;
 import algonquin.cst2335.phil0432.databinding.ReceiveMessageBinding;
@@ -25,20 +34,31 @@ import algonquin.cst2335.phil0432.databinding.SentMessageBinding;
 public class ChatRoom extends AppCompatActivity {
 
     ChatRoomViewModel chatModel ;
-    ArrayList<ChatMessage> messages;
+    static ArrayList<ChatMessage> messages;
     ActivityChatRoomBinding binding;
-    private RecyclerView.Adapter myAdapter;
+    static RecyclerView.Adapter<MyRowHolder> myAdapter;
+    static  ChatMessageDAO mDAO;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         chatModel = new ViewModelProvider(this).get(ChatRoomViewModel.class);
 
+        MessageDatabase db = Room.databaseBuilder(getApplicationContext(), MessageDatabase.class, "database-name").build();
+        mDAO = db.cmDAO();
+
         messages = chatModel.messages.getValue();
         if(messages == null)
         {
-            messages = new ArrayList<ChatMessage>(); // just update the list, do not reassign
-            chatModel.messages.postValue(messages);
+            chatModel.messages.setValue(messages = new ArrayList<>());
+
+            Executor thread = Executors.newSingleThreadExecutor();
+            thread.execute(() ->
+            {
+                messages.addAll( mDAO.getAllMessages() ); //Once you get the data from database
+
+                runOnUiThread( () ->  binding.recycleView.setAdapter( myAdapter )); //You can then load the RecyclerView
+            });
         }
 
         chatModel.messages.observe(this, new Observer<ArrayList<ChatMessage>>() {
@@ -110,6 +130,42 @@ class MyRowHolder extends RecyclerView.ViewHolder {
 
     public MyRowHolder(@NonNull View itemView) {
         super(itemView);
+
+        itemView.setOnClickListener(clk ->{
+
+            int position = getAbsoluteAdapterPosition();
+            AlertDialog.Builder builder = new AlertDialog.Builder( itemView.getContext() );
+            builder.setMessage("Do you want to delete the message: " + messageText.getText())
+                    .setTitle("Question: ")
+                    .setNegativeButton("No",(dialog, cl) -> {})
+                    .setPositiveButton("Yes",(dialogI, cl) -> {
+                        ChatMessage m = messages.get(position);
+                        messages.remove(position);
+                        myAdapter.notifyItemRemoved(position);
+
+                        Executor thread = Executors.newSingleThreadExecutor();
+                        thread.execute(() -> {
+                            mDAO.deleteMessage(m);
+
+                        });
+                        Snackbar.make(messageText, "You deleted message #"+ position, Snackbar.LENGTH_LONG)
+                                .setAction("Undo",click ->{
+                                    messages.add(position, m);
+                                    myAdapter.notifyItemInserted(position);
+                                    Executor thread1 = Executors.newSingleThreadExecutor();
+                                    thread1.execute(() -> {
+                                        mDAO.insertMessage(m);
+                                    });
+
+                                })
+                                .show();
+
+
+
+
+                    })
+                    .create().show();
+        });
         messageText = itemView.findViewById(R.id.messageText);
         timeText = itemView.findViewById(R.id.timeText);
         senderImage = itemView.findViewById(R.id.senderImage); // Update this with your image view ID
